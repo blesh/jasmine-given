@@ -104,4 +104,3 @@ describe "jasmine-given CoffeeScript API", ->
             context "Inner block B", ->
                 Given -> @units = "cm"
                 Then -> @label == "3 cm"
-

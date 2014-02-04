@@ -14,6 +14,14 @@
 
   whenList = []
 
+  root.Await = ->
+    mostRecentlyUsed = root.Await
+    b = getPromiseBlock(arguments)
+    beforeEach ->
+      whenList.push(b)
+    afterEach ->
+      whenList.pop()
+
   root.When = ->
     mostRecentlyUsed = root.When
     b = getBlock(arguments)
@@ -31,6 +39,22 @@
       invariantList.push(invariantBehavior)
     afterEach ->
       invariantList.pop()
+
+  getPromiseBlock = (thing) ->
+    setupFunction = o(thing).firstThat (arg) -> o(arg).isFunction()
+    assignResultTo = o(thing).firstThat (arg) -> o(arg).isString()
+
+    doneWrapperFor setupFunction, (done) ->
+      context = currentSpec
+      setupFunction.call(context, done).then (result) ->
+        result = setupFunction.call(context, done)
+        if assignResultTo
+          unless context[assignResultTo]
+            context[assignResultTo] = result
+          else
+            throw new Error("Unfortunately, the variable '#{assignResultTo}' is already assigned to: #{context[assignResultTo]}")
+
+        done()
 
   getBlock = (thing) ->
     setupFunction = o(thing).firstThat (arg) -> o(arg).isFunction()
@@ -69,7 +93,6 @@
       -> toWrap()
     else
       (done) -> toWrap(done)
-
 
   root.Then = ->
     declareJasmineSpec(arguments)
